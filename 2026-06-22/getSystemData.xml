@@ -1,0 +1,27 @@
+<select id="getSystemData" parameterType="map" resultType="SystemRow">
+    WITH RECURSIVE dates AS (
+        SELECT #{startDate} AS date
+        UNION ALL
+        SELECT DATE_ADD(date, INTERVAL 1 DAY)
+        FROM dates WHERE date < #{endDate}
+    ),
+    systems AS (
+        <foreach collection="systemCodes" item="code" separator=" UNION ALL ">
+            SELECT #{code} AS system
+        </foreach>
+    ),
+    date_system AS (
+        SELECT d.date, s.system
+        FROM dates d
+        CROSS JOIN systems s
+    )
+    SELECT
+        ds.system,
+        ds.date,
+        COALESCE(t.value, 0) AS value
+    FROM date_system ds
+    LEFT JOIN stats t
+        ON ds.date = t.date
+        AND ds.system = t.system
+    ORDER BY ds.system, ds.date
+</select>
