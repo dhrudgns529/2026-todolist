@@ -7,6 +7,9 @@
 # (SiisTokenClient가 캐시·자동 재발급). secret.data의 BOARD_API_KEY를 제거하고
 # SIIS_* 6종(SIIS_PASSWORD 포함)을 추가했다 — 이전 폴더(2026-09-17)의 값을
 # 그대로 옮기지 마라, 그 키는 코드가 더 이상 읽지 않는다.
+# SIIS_* 6종 중 실제 자격증명 값(client_secret·password) 2개만 secret.data에 두고
+# 나머지 4개(token_url·client_id·username·grant_type)는 configmap.data(일반 env)로
+# 뺐다 — client_id·username처럼 그 자체로 비밀이 아닌 식별자를 시크릿에 몰아넣지 않는다.
 #
 # 주의:
 # - 이 시스템은 "키가 존재하되 빈 값"을 부재와 동일하게 취급한다.
@@ -52,8 +55,9 @@ configmap:
     # --- 게시판 인증 토큰 발급 API (SIIS, 2026-09-18 신설) ---
     SIIS_TOKEN_URL: ""                                # 토큰 발급 API 전체 URL
     SIIS_CLIENT_ID: ""                                # 발급 요청 바디 client_id
+    SIIS_USERNAME: ""                                 # 발급 요청 바디 username
     SIIS_GRANT_TYPE: ""                               # 발급 요청 바디 grant_type
-    # SIIS_USERNAME·SIIS_PASSWORD·SIIS_CLIENT_SECRET는 자격증명이라 secret 참조
+    # SIIS_CLIENT_SECRET·SIIS_PASSWORD만 시크릿(자격증명 값 자체)이라 secret 참조
 
     # --- 분류·처리 동작 설정 ---
     RAG_SCORE_THRESHOLD: "0.6"                        # 이관/자동답변 분기 임계값
@@ -86,6 +90,7 @@ secret:
     SAMSUNG_GAUSS_PORTAL_DB_USER: ""
     SAMSUNG_GAUSS_PORTAL_DB_PASSWORD: ""
     # BOARD_API_KEY 제거됨(2026-09-18) — 고정 인증 키 방식 폐기, 아래 SIIS_* 참조
+    # SIIS_TOKEN_URL·SIIS_CLIENT_ID·SIIS_USERNAME·SIIS_GRANT_TYPE은 시크릿이 아니라
+    # configmap.data 쪽에 있다(2026-09-21 재분류) — 여기 남는 건 실제 자격증명 값 2개뿐.
     SIIS_CLIENT_SECRET: ""                            # 발급 요청 바디 client_secret
-    SIIS_USERNAME: ""                                 # 발급 요청 바디 username
-    SIIS_PASSWORD: ""                                 # 발급 요청 바디 password (2026-09-21 추가, username과 짝)
+    SIIS_PASSWORD: ""                                 # 발급 요청 바디 password (username과 짝)
