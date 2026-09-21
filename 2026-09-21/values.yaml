@@ -1,0 +1,84 @@
+# board-inquiry-router 운영 서비스 환경변수 (Helm values)
+# 정본: repo/board-inquiry-router/src/shared/config.py (_REQUIRED_ENV) + .env.example
+#
+# 2026-09-21 갱신: 게시판(itvoc) 인증 방식 변경(2026-09-18 커밋 42c4eac) 반영.
+# 고정 BOARD_API_KEY를 세팅하는 방식은 폐기됐고, SIIS 토큰 발급 API를 호출해
+# 만료를 고려한 Bearer 액세스 토큰을 받아 쓴다(SiisTokenClient가 캐시·자동
+# 재발급). secret.data의 BOARD_API_KEY를 제거하고 SIIS_* 5종을 추가했다 —
+# 이전 폴더(2026-09-17)의 값을 그대로 옮기지 마라, 그 키는 코드가 더 이상
+# 읽지 않는다.
+#
+# 주의:
+# - 이 시스템은 "키가 존재하되 빈 값"을 부재와 동일하게 취급한다.
+#   한 의존성의 필수 키가 하나라도 비면 오류 없이 mock으로 폴백한다.
+#   배포 후 부팅 로그 event=mode_resolved 5줄(llm·rag_routing·rag_answer·db·board)로
+#   전부 external인지 반드시 확인할 것.
+# - board 의존성은 이제 BOARD_API_ENDPOINT 1개가 아니라 BOARD_API_ENDPOINT +
+#   SIIS_TOKEN_URL/SIIS_CLIENT_ID/SIIS_CLIENT_SECRET/SIIS_USERNAME/SIIS_GRANT_TYPE
+#   6개가 전부 채워져야 external로 판정된다.
+# - PREPROCESS_ACTIVE_PATH는 경로만 넣으면 안 되고, 해당 preset JSON 파일을
+#   이미지 포함 또는 볼륨 마운트로 실제 존재하게 해야 한다(없으면 기동 실패).
+
+configmap:
+  data:
+    # --- AI: 답변 생성 (Chat 레인) ---
+    SAMSUNG_GAUSS_PORTAL_CHAT_ENDPOINT: ""            # Chat API 전체 URL (경로 포함)
+    SAMSUNG_GAUSS_PORTAL_CHAT_ASSET_ID: ""            # 모델 ID (modelIds, 쉼표 구분 가능)
+    SAMSUNG_GAUSS_PORTAL_CHAT_AD_ID: ""               # x-generative-ai-user-email (사용자 식별)
+
+    # --- AI: 분류용 검색 (Knowledge 레인) ---
+    SAMSUNG_GAUSS_PORTAL_KNOWLEDGE_ENDPOINT: ""       # base URL만 (코드가 /assets/<id>/search 조립)
+    SAMSUNG_GAUSS_PORTAL_KNOWLEDGE_ASSET_ID: ""       # 검색 대상 asset 식별자
+    SAMSUNG_GAUSS_PORTAL_KNOWLEDGE_AD_ID: ""          # x-generative-ai-user-email
+
+    # --- AI: 답변용 검색 (Agent 레인) ---
+    SAMSUNG_GAUSS_PORTAL_AGENT_ENDPOINT: ""           # Agent API 전체 URL (경로 포함)
+    SAMSUNG_GAUSS_PORTAL_AGENT_ASSET_ID: ""           # 에이전트 ID (agentId)
+    SAMSUNG_GAUSS_PORTAL_AGENT_AD_ID: ""              # x-generative-ai-user-email
+
+    # --- 데이터베이스 (MySQL) ---
+    SAMSUNG_GAUSS_PORTAL_DB_HOST: ""
+    SAMSUNG_GAUSS_PORTAL_DB_PORT: "3306"
+    SAMSUNG_GAUSS_PORTAL_DB_NAME: ""
+
+    # --- 게시판 회신 (itvoc) ---
+    BOARD_API_ENDPOINT: ""                            # 회신 콜백 전체 URL
+    BOARD_API_REGISTER_ID: ""                         # 회신 바디 registerId
+    BOARD_API_VOC_TYPE_CODE: ""                       # 회신 바디 vocTypeCode
+
+    # --- 게시판 인증 토큰 발급 API (SIIS, 2026-09-18 신설) ---
+    SIIS_TOKEN_URL: ""                                # 토큰 발급 API 전체 URL
+    SIIS_CLIENT_ID: ""                                # 발급 요청 바디 client_id
+    SIIS_GRANT_TYPE: ""                               # 발급 요청 바디 grant_type
+
+    # --- 분류·처리 동작 설정 ---
+    RAG_SCORE_THRESHOLD: "0.6"                        # 이관/자동답변 분기 임계값
+    RESTRICTED_SYSTEM_CODES: ""                       # 특수 처리 시스템 코드 (쉼표 구분)
+    MAX_CONCURRENT_TASKS: "5"                         # 워커 동시 처리 상한
+    LLM_CALL_TIMEOUT: "30"                            # LLM 단일 호출 타임아웃(초)
+    ANSWER_TOTAL_TIMEOUT: "120"                       # 자동답변 단계 전체 타임아웃(초)
+    REQUEST_TIMEOUT: "30"                             # 일반 HTTP 타임아웃(초)
+
+    # --- 복원력 설정 ---
+    QUEUE_MAX_SIZE: "500"                             # 워커 큐 상한 (백프레셔)
+    WORKER_RETRY_MAX: "3"                             # 문의당 최대 시도 횟수
+    SHUTDOWN_GRACE_S: "10"                            # 종료 grace 기간(초)
+
+    # --- 전처리·기타 ---
+    PREPROCESS_ACTIVE_PATH: ""                        # 운영 활성 preset 파일 경로 (없으면 기동 실패)
+    ROOT_PATH: ""                                     # 리버스 프록시 하위 경로 prefix
+    APP_ENV: "production"
+
+secret:
+  data:
+    SAMSUNG_GAUSS_PORTAL_CHAT_GENERATIVE_KEY: ""      # x-generative-ai-client
+    SAMSUNG_GAUSS_PORTAL_CHAT_API_KEY: ""             # x-openapi-token
+    SAMSUNG_GAUSS_PORTAL_KNOWLEDGE_GENERATIVE_KEY: ""
+    SAMSUNG_GAUSS_PORTAL_KNOWLEDGE_API_KEY: ""
+    SAMSUNG_GAUSS_PORTAL_AGENT_GENERATIVE_KEY: ""
+    SAMSUNG_GAUSS_PORTAL_AGENT_API_KEY: ""
+    SAMSUNG_GAUSS_PORTAL_DB_USER: ""
+    SAMSUNG_GAUSS_PORTAL_DB_PASSWORD: ""
+    # BOARD_API_KEY 제거됨(2026-09-18) — 고정 인증 키 방식 폐기, 아래 SIIS_* 참조
+    SIIS_CLIENT_SECRET: ""                            # 발급 요청 바디 client_secret
+    SIIS_USERNAME: ""                                 # 발급 요청 바디 username
