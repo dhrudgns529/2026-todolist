@@ -16,8 +16,11 @@
 # - board 의존성은 이제 BOARD_API_ENDPOINT 1개가 아니라 BOARD_API_ENDPOINT +
 #   SIIS_TOKEN_URL/SIIS_CLIENT_ID/SIIS_CLIENT_SECRET/SIIS_USERNAME/SIIS_PASSWORD/
 #   SIIS_GRANT_TYPE 7개가 전부 채워져야 external로 판정된다.
-# - PREPROCESS_ACTIVE_PATH는 경로만 넣으면 안 되고, 해당 preset JSON 파일을
-#   이미지 포함 또는 볼륨 마운트로 실제 존재하게 해야 한다(없으면 기동 실패).
+# - PREPROCESS_ACTIVE_PATH는 이름과 달리 배치/실험 전용이 아니다 - service/api/main.py가
+#   부팅 시 로드하고, service/workflow/graph.py:build_query_text가 분류 API 요청마다
+#   문의 텍스트 정규화에 쓴다(RAG 검색 직전). 경로만 넣지 말고 해당 preset JSON 파일을
+#   이미지 포함 또는 볼륨 마운트로 실제 존재하게 해야 한다 - 없으면 서비스가 기동 자체를
+#   못 한다(분류 API가 아예 안 뜬다).
 
 configmap:
   data:
@@ -65,8 +68,10 @@ configmap:
     WORKER_RETRY_MAX: "3"                             # 문의당 최대 시도 횟수
     SHUTDOWN_GRACE_S: "10"                            # 종료 grace 기간(초)
 
-    # --- 전처리·기타 ---
-    PREPROCESS_ACTIVE_PATH: ""                        # 운영 활성 preset 파일 경로 (없으면 기동 실패)
+    # --- 질의 전처리(런타임 필수 — 분류 API 호출마다 실행됨, 배치/실험 전용 아님) ---
+    PREPROCESS_ACTIVE_PATH: ""                        # 운영 활성 preset 파일 경로 (없으면 기동 자체가 실패)
+
+    # --- 기타 ---
     ROOT_PATH: ""                                     # 리버스 프록시 하위 경로 prefix
     APP_ENV: "production"
 
