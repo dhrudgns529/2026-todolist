@@ -11,6 +11,11 @@
 # 나머지 4개(token_url·client_id·username·grant_type)는 configmap.data(일반 env)로
 # 뺐다 — client_id·username처럼 그 자체로 비밀이 아닌 식별자를 시크릿에 몰아넣지 않는다.
 #
+# 2026-09-21 추가 갱신: DB(MySQL) 키의 접두어를 뗐다(커밋 b61a8bd). DB는 사내 LLM
+# 플랫폼(Gauss)과 무관한 별개 인프라라 게시판(board)과 같은 원칙을 적용한 것 —
+# SAMSUNG_GAUSS_PORTAL_DB_* 전량이 MYSQL_DB_*로 바뀌었다(HOST/PORT/NAME은
+# configmap, USER/PASSWORD는 secret). 이전 폴더들의 DB 키 이름을 그대로 옮기지 마라.
+#
 # 주의:
 # - 이 시스템은 "키가 존재하되 빈 값"을 부재와 동일하게 취급한다.
 #   한 의존성의 필수 키가 하나라도 비면 오류 없이 mock으로 폴백한다.
@@ -42,10 +47,10 @@ configmap:
     SAMSUNG_GAUSS_PORTAL_AGENT_ASSET_ID: ""           # 에이전트 ID (agentId)
     SAMSUNG_GAUSS_PORTAL_AGENT_AD_ID: ""              # x-generative-ai-user-email
 
-    # --- 데이터베이스 (MySQL) ---
-    SAMSUNG_GAUSS_PORTAL_DB_HOST: ""
-    SAMSUNG_GAUSS_PORTAL_DB_PORT: "3306"
-    SAMSUNG_GAUSS_PORTAL_DB_NAME: ""
+    # --- 데이터베이스 (MySQL) — Gauss 플랫폼과 무관해 접두어 없음(2026-09-21 결정) ---
+    MYSQL_DB_HOST: ""
+    MYSQL_DB_PORT: "3306"
+    MYSQL_DB_NAME: ""
 
     # --- 게시판 회신 (itvoc) ---
     BOARD_API_ENDPOINT: ""                            # 회신 콜백 전체 URL
@@ -87,8 +92,8 @@ secret:
     SAMSUNG_GAUSS_PORTAL_KNOWLEDGE_API_KEY: ""
     SAMSUNG_GAUSS_PORTAL_AGENT_GENERATIVE_KEY: ""
     SAMSUNG_GAUSS_PORTAL_AGENT_API_KEY: ""
-    SAMSUNG_GAUSS_PORTAL_DB_USER: ""
-    SAMSUNG_GAUSS_PORTAL_DB_PASSWORD: ""
+    MYSQL_DB_USER: ""                                 # Gauss 플랫폼과 무관해 접두어 없음(2026-09-21 결정)
+    MYSQL_DB_PASSWORD: ""
     # BOARD_API_KEY 제거됨(2026-09-18) — 고정 인증 키 방식 폐기, 아래 SIIS_* 참조
     # SIIS_TOKEN_URL·SIIS_CLIENT_ID·SIIS_USERNAME·SIIS_GRANT_TYPE은 시크릿이 아니라
     # configmap.data 쪽에 있다(2026-09-21 재분류) — 여기 남는 건 실제 자격증명 값 2개뿐.
