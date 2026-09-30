@@ -12,9 +12,8 @@
 
   [A. 조회 명령] 사용할 git 명령 목록 (fetch, for-each-ref, rev-parse, rev-list, cherry,
       merge-tree, merge-base, diff, log, grep, cat-file, status 등)
-  [B. 작업 파일] ../branch-audit-work/ 폴더를 만들고, 이 프롬프트 전문을 prompt.md 로 저장하고,
-      분석 스크립트와 중간 결과를 이 폴더에 작성
-  [C. 스크립트 실행] bash ../branch-audit-work/scan.sh 로 분석 실행 (1단계 1회, 2단계는 묶음마다 1회)
+  [B. 작업 파일] ../branch-audit-work/ 폴더를 만들고, 분석 스크립트와 중간 결과를 이 폴더에 작성
+  [C. 스크립트 실행] bash ../branch-audit-work/scan.sh 로 분석 실행 (단계별 1~2회)
   [D. 커밋/푸시] git switch -c, 결과 파일 복사, git add, git commit, git push -u, 원래 브랜치로 git switch
 
 - 승인 요청을 줄이기 위해, 분석 명령을 하나씩 실행하지 말고 스크립트 파일로 묶어 한 번에 실행한다.
@@ -36,7 +35,6 @@
 3. git merge-tree --write-tree A X 가 충돌 없이 성공하고, 결과 트리가 git rev-parse "A^{tree}" 와 같음
    → 내용이 이미 A에 반영됨 (squash 병합 등). git 2.38 미만이면 생략하고 그 사실을 보고한다.
 1단계 결과(개수 요약)를 보고한 뒤 2단계로 진행한다.
-1단계가 끝나면 2단계 분석 대상 목록을 20개씩 묶음으로 나눠 ../branch-audit-work/progress.md 에 기록한다.
 
 ### 2단계: 나머지 브랜치 상세 분석
 - 기준 선택: 5개 A 각각에 대해 git cherry A X 의 '+' 개수를 세고, 가장 적은 A를 비교 기준으로 삼는다.
@@ -53,17 +51,7 @@
   · 고유: 대부분 없음 → 해당 코드 블록을 보여준다
 - 요약: 브랜치의 목적 2~3줄 (추측은 "추측"으로 표시), 현재 코드와 충돌하거나 이미 대체됐는지
 
-### 묶음 단위 진행 (토큰 절약)
-- 2단계는 progress.md 의 묶음(20개) 단위로 진행한다. 한 번에 한 묶음만 분석한다.
-- 묶음 하나가 끝나면:
-  1. 그 묶음의 결과를 ../branch-audit-work/diff-branches.md 에 이어 쓴다. (이전 내용은 수정하지 않음)
-  2. progress.md 에 완료한 묶음 번호, 브랜치별 판정, 다음에 진행할 묶음 번호를 갱신한다.
-  3. 묶음 결과를 짧게 보고하고 멈춘다. 다음 묶음은 내가 지시하면 진행한다.
-- 내가 대화를 초기화(/clear)한 뒤 "이어서 진행"이라고 하면, ../branch-audit-work/prompt.md 와 progress.md 만 읽고
-  다음 묶음부터 이어서 진행한다. 이전 묶음의 diff를 다시 읽지 않는다.
-- 모든 묶음이 끝나면 progress.md 와 diff-branches.md 를 바탕으로 README.md 를 작성한다.
-
-## 결과물 (먼저 ../branch-audit-work/ 에 작성, progress.md 는 작업용이라 커밋하지 않음)
+## 결과물 (먼저 ../branch-audit-work/ 에 작성)
 - README.md: 조사 일시, 기준 브랜치별 커밋 해시, 판정별 개수,
   "잃으면 안 되는 고유 코드" 목록(브랜치 / 파일 / 설명, 고유 코드가 많은 순),
   분석에 실패한 브랜치
