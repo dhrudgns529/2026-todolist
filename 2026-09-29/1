@@ -1,0 +1,24 @@
+1. 키 생성
+
+ssh-keygen -t ed25519 -C "b-pc"
+
+순서대로 입력:
+- 저장 경로: 엔터 (기본값 C:\Users\b\.ssh\id_ed25519)
+- passphrase: 엔터 (비밀번호 없이 쓰려면 그냥 엔터 두 번)
+
+2. 생성된 파일 확인
+
+Get-ChildItem $env:USERPROFILE\.ssh
+- id_ed25519 → 개인키 (절대 남한테 공유 X)
+- id_ed25519.pub → 공개키 (이게 서버/다른 PC에 등록할 파일)
+
+3. 공개키 내용 확인
+
+Get-Content $env:USERPROFILE\.ssh\id_ed25519.pub
+이렇게 한 줄로 나오는 게 공개키입니다:
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI... b-pc
+
+4. (이미 개인키가 있는 경우) 개인키에서 공개키만 재생성
+
+혹시 id_rsa나 id_ed25519 개인키 파일만 있고 .pub 파일이 없어졌다면:
+ssh-keygen -y -f C:\Users\b\.ssh\id_ed25519 > C:\Users\b\.ssh\id_ed25519.pub
